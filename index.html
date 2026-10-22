@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coffee Price List</title>
+<meta name="description" content="Our current coffees, prices, flavor notes and bag sizes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  /* ================= SETTINGS — edit these ================= */
+  window.CONFIG = {
+    // Paste your Apps Script web app URL (ends in /exec)
+    apiUrl: 'PASTE_YOUR_WEB_APP_URL_HERE',
+    shopName: 'Coffee Price List',
+    tagline: 'Freshly roasted beans. Tap any coffee for its flavor notes and bag sizes.',
+    currencySymbol: '₱',
+    // Optional: where customers order (Messenger, Instagram, shop link). Leave '' to hide.
+    orderUrl: '',
+    orderLabel: 'Order now',
+  };
+  /* ========================================================= */
+</script>
+<style>
+  :root {
+    --bg: #f7f2ea; --panel: #fffdf9; --fg: #2a1f17; --muted: #7a6a5c;
+    --line: #e6dccd; --accent: #9a4a1f; --accent-soft: #f3e3d3; --chip: #efe6da;
+    --bad: #b3261e; --shadow: 0 1px 2px rgba(42,31,23,.06), 0 4px 16px rgba(42,31,23,.05);
+    --radius: 14px; --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17120e; --panel: #211a15; --fg: #f3ebe2; --muted: #b3a393;
+      --line: #3a2f27; --accent: #e59a63; --accent-soft: #3a2619; --chip: #2e241d;
+      --bad: #f2867d; --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 52rem; margin-inline: auto; padding: 40px 16px 64px; }
+
+  header h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .tagline { margin: 0; color: var(--muted); max-width: 36rem; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: var(--muted); font-size: .9rem; }
+  .stats b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .order { display: inline-block; margin-top: 18px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; padding: 10px 18px; border-radius: 999px; }
+  @media (prefers-color-scheme: dark) { .order { color: #1b120b; } }
+
+  .tools { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 16px 0 12px; margin-top: 20px; display: grid; gap: 10px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; appearance: none; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: .9rem; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .row2 { display: flex; gap: 8px; }
+  .search, .sort { border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 10px; padding: 9px 12px; font: inherit; font-size: .95rem; }
+  .search { flex: 1; min-width: 0; }
+  .sort { flex: none; }
+
+  .groups { display: grid; gap: 28px; min-height: 40vh; }
+  .group h2 { font-family: var(--serif); font-weight: 600; font-size: 1.35rem; margin: 0 0 10px; display: flex; align-items: baseline; gap: 8px; }
+  .group h2 small { font-family: var(--sans); font-size: .8rem; font-weight: 400; color: var(--muted); }
+  .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .head { display: grid; grid-template-columns: minmax(0, 1fr) auto 14px; gap: 14px; align-items: center; width: 100%; text-align: left; background: none; border: 0; margin: 0; padding: 14px 18px; font: inherit; color: inherit; cursor: pointer; }
+  .head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius); }
+  .name { display: block; font-weight: 600; }
+  .sub { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
+  .price { font-family: var(--serif); font-size: 1.25rem; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  .from { font-family: var(--sans); font-size: .75rem; color: var(--muted); margin-right: 4px; }
+  .chev { width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translate(-2px, -2px); transition: transform .2s; }
+  .head[aria-expanded="true"] .chev { transform: rotate(-135deg) translate(-2px, -2px); }
+  .detail { border-top: 1px dashed var(--line); padding: 14px 18px 18px; display: grid; gap: 14px; }
+  .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; }
+  .notes, .sizes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .note { background: var(--accent-soft); color: var(--fg); border-radius: 999px; padding: 4px 12px; font-size: .88rem; }
+  .size { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; display: flex; gap: 12px; align-items: baseline; font-variant-numeric: tabular-nums; }
+  .size b { font-weight: 600; }
+  .size span { color: var(--muted); }
+  @media (prefers-reduced-motion: no-preference) { .detail { animation: open .22s ease-out; } }
+  @keyframes open { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+  .msg { text-align: center; color: var(--muted); padding: 48px 16px; }
+  .msg .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); margin-right: 8px; vertical-align: middle; }
+  .notice { background: var(--chip); border-radius: 10px; padding: 10px 14px; font-size: .88rem; color: var(--muted); margin-bottom: 16px; }
+  .skel { height: 68px; border-radius: var(--radius); background: linear-gradient(90deg, var(--chip), var(--panel), var(--chip)); background-size: 200% 100%; animation: shimmer 1.4s infinite linear; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  footer { margin-top: 40px; color: var(--muted); font-size: .8rem; text-align: center; }
+  @media (max-width: 480px) {
+    .wrap { padding-top: 28px; }
+    .head { padding: 12px 14px; gap: 10px; }
+    .detail { padding: 12px 14px 16px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1 id="title">Coffee Price List</h1>
+    <p class="tagline" id="tagline"></p>
+    <div class="stats" id="stats" hidden>
+      <span><b id="stat-count">—</b> coffees</span>
+      <span>bags from <b id="stat-low">—</b></span>
+    </div>
+    <a class="order" id="order" hidden target="_blank" rel="noopener"></a>
+  </header>
+
+  <div class="tools" id="tools" hidden>
+    <div class="chips" role="group" aria-label="Filter by roast" id="chips"></div>
+    <div class="row2">
+      <input class="search" id="search" type="search" placeholder="Search origin or flavor, e.g. berries" aria-label="Search coffees">
+      <select class="sort" id="sort" aria-label="Sort">
+        <option value="menu">Menu order</option>
+        <option value="low">Price: low to high</option>
+        <option value="high">Price: high to low</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="notice"></div>
+  <div class="groups" id="groups" aria-live="polite">
+    <div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>
+  </div>
+
+  <footer id="footer"></footer>
+</main>
+
+<script>
+(() => {
+  const C = window.CONFIG;
+  const $ = (id) => document.getElementById(id);
+  const CACHE = 'coffee-price-list-cache-v1';
+  const state = { data: null, roast: 'All', q: '', sort: 'menu', open: new Set(), stale: false };
+  const money = (n) => C.currencySymbol + Number(n).toLocaleString('en-PH', { maximumFractionDigits: 2 });
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const store = {
+    get() { try { return JSON.parse(localStorage.getItem(CACHE)); } catch (e) { return null; } },
+    set(v) { try { localStorage.setItem(CACHE, JSON.stringify(v)); } catch (e) { /* storage off */ } },
+  };
+
+  document.title = C.shopName;
+  $('title').textContent = C.shopName;
+  $('tagline').textContent = C.tagline;
+  if (C.orderUrl) { const o = $('order'); o.href = C.orderUrl; o.textContent = C.orderLabel || 'Order now'; o.hidden = false; }
+
+  function showError(text) {
+    const m = el('div', 'msg');
+    m.append(el('span', 'dot'), document.createTextNode(text));
+    $('groups').replaceChildren(m);
+  }
+
+  async function load() {
+    if (!C.apiUrl || C.apiUrl.indexOf('PASTE_') === 0) {
+      showError('Price list not connected yet: set CONFIG.apiUrl in index.html.');
+      return;
+    }
+    const cached = store.get();
+    if (cached && cached.coffees) { state.data = cached; render(); }
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 20000);
+      const res = await fetch(C.apiUrl, { signal: ctrl.signal, redirect: 'follow' });
+      clearTimeout(t);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      if (!json.ok || !Array.isArray(json.coffees)) throw new Error(json.error || 'Unexpected response');
+      state.data = json; state.stale = false;
+      store.set(json);
+    } catch (err) {
+      console.warn('Price list fetch failed:', err);
+      if (state.data) state.stale = true;
+      else { showError('Couldn’t load the price list right now. Please try again in a moment.'); return; }
+    }
+    render();
+  }
+
+  function render() {
+    const coffees = state.data.coffees;
+    const prices = coffees.flatMap((c) => c.sizes.map((s) => s.price));
+    $('stat-count').textContent = coffees.length;
+    $('stat-low').textContent = prices.length ? money(Math.min(...prices)) : '—';
+    $('stats').hidden = false;
+    $('tools').hidden = false;
+
+    const notice = $('notice');
+    notice.replaceChildren();
+    if (state.stale) notice.append(el('div', 'notice', 'Showing the last saved list — we couldn’t refresh just now.'));
+
+    const roasts = ['All', ...new Set(coffees.map((c) => c.roast).filter(Boolean))];
+    if (!roasts.includes(state.roast)) state.roast = 'All';
+    $('chips').replaceChildren(...roasts.map((r) => {
+      const b = el('button', 'chip', r);
+      b.type = 'button'; b.dataset.roast = r;
+      b.setAttribute('aria-pressed', String(r === state.roast));
+      return b;
+    }));
+
+    const q = state.q.trim().toLowerCase();
+    const minPrice = (c) => Math.min(...c.sizes.map((s) => s.price));
+    let shown = coffees.filter((c) =>
+      (state.roast === 'All' || c.roast === state.roast) &&
+      (!q || [c.name, c.varietal, c.process, c.roast, ...c.notes].join(' ').toLowerCase().includes(q)));
+
+    const sections = [];
+    if (state.sort === 'menu') {
+      const groups = new Map();
+      shown.forEach((c) => { if (!groups.has(c.roast)) groups.set(c.roast, []); groups.get(c.roast).push(c); });
+      for (const [roast, list] of groups) sections.push(section(roast, list));
+    } else {
+      shown = [...shown].sort((a, b) => state.sort === 'low' ? minPrice(a) - minPrice(b) : minPrice(b) - minPrice(a));
+      if (shown.length) sections.push(section(state.roast === 'All' ? 'All coffees' : state.roast, shown));
+    }
+
+    if (sections.length) $('groups').replaceChildren(...sections);
+    else $('groups').replaceChildren(el('div', 'msg', 'No coffees match that search.'));
+
+    const when = state.data.updated ? new Date(state.data.updated) : null;
+    $('footer').textContent = when && !isNaN(when) ? 'Prices updated ' + when.toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+  }
+
+  function section(title, list) {
+    const sec = el('section', 'group');
+    const h = el('h2', null, title);
+    h.append(el('small', null, list.length + (list.length === 1 ? ' coffee' : ' coffees')));
+    const ul = el('ul', 'list');
+    list.forEach((c) => ul.append(item(c)));
+    sec.append(h, ul);
+    return sec;
+  }
+
+  function item(c) {
+    const isOpen = state.open.has(c.name);
+    const li = el('li', 'item');
+    const btn = el('button', 'head');
+    btn.type = 'button'; btn.dataset.name = c.name;
+    btn.setAttribute('aria-expanded', String(isOpen));
+    const left = el('span');
+    left.append(el('span', 'name', c.name), el('span', 'sub', [c.varietal, c.process].filter(Boolean).join(' · ')));
+    const price = el('span', 'price');
+    const lo = Math.min(...c.sizes.map((s) => s.price));
+    if (c.sizes.length > 1) price.append(el('span', 'from', 'from'));
+    price.append(document.createTextNode(c.sizes.length ? money(lo) : '—'));
+    btn.append(left, price, el('span', 'chev'));
+    li.append(btn);
+
+    if (isOpen) {
+      const det = el('div', 'detail');
+      const nb = el('div');
+      nb.append(el('div', 'label', 'Flavor notes'));
+      const notes = el('div', 'notes');
+      if (c.notes.length) c.notes.forEach((n) => notes.append(el('span', 'note', n)));
+      else notes.append(el('span', 'sub', 'Notes coming soon'));
+      nb.append(notes);
+      const sb = el('div');
+      sb.append(el('div', 'label', c.sizes.length > 1 ? 'Bag sizes' : 'Bag size'));
+      const sizes = el('div', 'sizes');
+      c.sizes.forEach((s) => { const d = el('div', 'size'); d.append(el('b', null, s.label), el('span', null, money(s.price))); sizes.append(d); });
+      sb.append(sizes);
+      det.append(nb, sb);
+      li.append(det);
+    }
+    return li;
+  }
+
+  $('groups').addEventListener('click', (e) => {
+    const b = e.target.closest('.head');
+    if (!b) return;
+    const name = b.dataset.name;
+    state.open.has(name) ? state.open.delete(name) : state.open.add(name);
+    render();
+    const again = [...document.querySelectorAll('.head')].find((x) => x.dataset.name === name);
+    if (again) again.focus({ preventScroll: true });
+  });
+  $('chips').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (b) { state.roast = b.dataset.roast; render(); }
+  });
+  $('search').addEventListener('input', (e) => { state.q = e.target.value; if (state.data) render(); });
+  $('sort').addEventListener('change', (e) => { state.sort = e.target.value; if (state.data) render(); });
+
+  load();
+})();
+</script>
+</body>
+</html>
