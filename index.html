@@ -24,20 +24,15 @@
 </script>
 <style>
   :root {
+    color-scheme: light;
     --bg: #f7f2ea; --panel: #fffdf9; --fg: #2a1f17; --muted: #7a6a5c;
-    --line: #e6dccd; --accent: #9a4a1f; --accent-soft: #f3e3d3; --chip: #efe6da;
+    --line: #e6dccd; --accent: #1f7f7a; --accent-soft: #d8f1ee; --chip: #efe6da;
     --bad: #b3261e; --shadow: 0 1px 2px rgba(42,31,23,.06), 0 4px 16px rgba(42,31,23,.05);
     --radius: 14px; --serif: 'Fraunces', Georgia, serif;
     --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #17120e; --panel: #211a15; --fg: #f3ebe2; --muted: #b3a393;
-      --line: #3a2f27; --accent: #e59a63; --accent-soft: #3a2619; --chip: #2e241d;
-      --bad: #f2867d; --shadow: none;
-    }
-  }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.5; }
   .wrap { max-width: 52rem; margin-inline: auto; padding: 40px 16px 64px; }
@@ -47,7 +42,6 @@
   .stats { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: var(--muted); font-size: .9rem; }
   .stats b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
   .order { display: inline-block; margin-top: 18px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; padding: 10px 18px; border-radius: 999px; }
-  @media (prefers-color-scheme: dark) { .order { color: #1b120b; } }
 
   .tools { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 16px 0 12px; margin-top: 20px; display: grid; gap: 10px; }
   .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
