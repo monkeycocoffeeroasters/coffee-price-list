@@ -10,13 +10,17 @@
  *   Execute as: Me
  *   Who has access: Anyone
  * Then paste the /exec URL into CONFIG.apiUrl in the website's index.html.
+ *
+ * Availability: cross out (strikethrough) a coffee's name in the sheet to hide
+ * it from the website. Crossing out just one bag size's size/price cell hides
+ * only that size.
  */
 
 // "Updated Coffee Offerings 2025"
 const SPREADSHEET_ID = '17zmJMkw-3rn1XRhcU55_upC7myx2KV2b2Nvl8jEKVOc';
 const SHEET_NAME = 'Sheet1';     // falls back to the first tab if renamed
 const CACHE_SECONDS = 300;       // sheet edits show on the site within ~5 minutes
-const CACHE_KEY = 'coffee-price-list-v1';
+const CACHE_KEY = 'coffee-price-list-v2';
 
 function doGet() {
   const cache = CacheService.getScriptCache();
@@ -47,8 +51,13 @@ function buildPayload_() {
   const sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
   const range = sheet.getDataRange();
   const grid = range.getDisplayValues();
-  fillMerged_(grid, range.getMergedRanges(), range.getRow(), range.getColumn());
-  return parseGrid_(grid);
+  const struck = range.getFontLines().map(function (row) {
+    return row.map(function (line) { return line === 'line-through'; });
+  });
+  const merged = range.getMergedRanges();
+  fillMerged_(grid, merged, range.getRow(), range.getColumn());
+  fillMerged_(struck, merged, range.getRow(), range.getColumn());
+  return parseGrid_(grid, struck);
 }
 
 /** Copies each merged range's value into every cell it covers. */
@@ -70,8 +79,13 @@ function fillMerged_(grid, merged, r0, c0) {
  * Price | Size), then for each coffee a row with its name, followed by a row
  * whose second Origin column holds its flavor notes. A coffee listed again
  * with another size/price (e.g. 125g and 250g) becomes one coffee with two sizes.
+ * `struck` (optional) is a same-shaped grid of booleans: true where the cell's
+ * text is crossed out. A crossed-out name skips that coffee and its notes row;
+ * a crossed-out size or price cell skips that bag size.
  */
-function parseGrid_(grid) {
+function parseGrid_(grid, struck) {
+  const isStruck = function (r, c) { return !!(struck && struck[r] && struck[r][c]); };
+  const SKIP = {};
   const norm = function (s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); };
 
   let h = -1;
@@ -105,6 +119,10 @@ function parseGrid_(grid) {
     const row = grid[r].map(norm);
     const name = row[col.origin];
     const notes = row[col.notes];
+    if (name && isStruck(r, col.origin)) {
+      cur = SKIP;          // unavailable: ignore this coffee and its notes row
+      continue;
+    }
     if (name) {
       if (!byName[name]) {
         byName[name] = {
@@ -118,16 +136,20 @@ function parseGrid_(grid) {
         items.push(byName[name]);
       }
       cur = byName[name];
+    } else if (cur === SKIP) {
+      continue;
     } else if (notes && cur && !cur.notes.length) {
       cur.notes = notes.split(',').map(norm).filter(String);
     }
     const size = row[col.size];
     const price = num(row[col.price]);
+    if (isStruck(r, col.size) || isStruck(r, col.price)) continue;
     if (cur && size && price != null && !cur.sizes.some(function (s) { return s.label === size; })) {
       cur.sizes.push({ label: size, grams: num(size), price: price });
     }
   }
 
-  items.forEach(function (it) { it.sizes.sort(function (a, b) { return (a.grams || 0) - (b.grams || 0); }); });
-  return { ok: true, currency: 'PHP', updated: new Date().toISOString(), coffees: items };
+  const available = items.filter(function (it) { return it.sizes.length > 0; });
+  available.forEach(function (it) { it.sizes.sort(function (a, b) { return (a.grams || 0) - (b.grams || 0); }); });
+  return { ok: true, currency: 'PHP', updated: new Date().toISOString(), coffees: available };
 }
