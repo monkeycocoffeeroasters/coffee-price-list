@@ -78,7 +78,16 @@
   .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; }
   .notes, .sizes { display: flex; flex-wrap: wrap; gap: 6px; }
   .note { background: var(--accent-soft); color: var(--fg); border-radius: 999px; padding: 4px 12px; font-size: .88rem; }
-  .size { border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .sizes { gap: 10px; }
+  .size { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); overflow: hidden; font-variant-numeric: tabular-nums; min-width: 11rem; flex: 0 1 auto; }
+  .size-bag { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+  .size-bag svg { width: 26px; height: 26px; flex: none; color: var(--accent); }
+  .size-g { display: block; font-weight: 600; font-size: 1.05rem; line-height: 1.15; }
+  .size-u { display: block; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .size-p { display: flex; flex-direction: column; justify-content: center; margin-left: auto; padding: 10px 16px; background: var(--accent-soft); border-left: 1px dashed var(--line); text-align: right; }
+  .size-p b { font-family: var(--serif); font-weight: 600; font-size: 1.2rem; line-height: 1.15; color: var(--fg); }
+  .size-p small { font-size: .72rem; color: var(--muted); }
+  @media (max-width: 480px) { .size { flex: 1 1 100%; } }
   @media (prefers-reduced-motion: no-preference) { .detail { animation: open .22s ease-out; } }
   @keyframes open { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
@@ -261,14 +270,31 @@
       else notes.append(el('span', 'sub', 'Notes coming soon'));
       nb.append(notes);
       const sb = el('div');
-      sb.append(el('div', 'label', c.sizes.length > 1 ? 'Bag sizes' : 'Bag size'));
+      sb.append(el('div', 'label', c.sizes.length > 1 ? 'Bag sizes & prices' : 'Bag size & price'));
       const sizes = el('div', 'sizes');
-      c.sizes.forEach((s) => sizes.append(el('span', 'size', s.label)));
+      c.sizes.forEach((s) => sizes.append(sizeTile(s)));
       sb.append(sizes);
       det.append(nb, sb);
       li.append(det);
     }
     return li;
+  }
+
+  const BAG_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M7 3h10l1 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7z"/><path d="M6 7h12"/><path d="M9.5 3v1.5M14.5 3v1.5"/><ellipse cx="12" cy="13.5" rx="2.2" ry="3.2" transform="rotate(25 12 13.5)"/><path d="M11 11c.8 1 .8 4-.1 5"/></svg>';
+
+  function sizeTile(s) {
+    const tile = el('div', 'size');
+    tile.setAttribute('role', 'group');
+    tile.setAttribute('aria-label', s.label + ' bag, ' + money(s.price));
+    const bag = el('div', 'size-bag');
+    bag.insertAdjacentHTML('afterbegin', BAG_SVG);
+    const w = el('div');
+    w.append(el('span', 'size-g', s.label), el('span', 'size-u', 'bag'));
+    bag.append(w);
+    const p = el('div', 'size-p');
+    p.append(el('b', null, money(s.price)), el('small', null, 'per bag'));
+    tile.append(bag, p);
+    return tile;
   }
 
   $('groups').addEventListener('click', (e) => {
