@@ -83,10 +83,8 @@
   .size-bag { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
   .size-bag svg { width: 26px; height: 26px; flex: none; color: var(--accent); }
   .size-g { display: block; font-weight: 600; font-size: 1.05rem; line-height: 1.15; }
-  .size-u { display: block; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
   .size-p { display: flex; flex-direction: column; justify-content: center; margin-left: auto; padding: 10px 16px; background: var(--accent-soft); border-left: 1px dashed var(--line); text-align: right; }
   .size-p b { font-family: var(--serif); font-weight: 600; font-size: 1.2rem; line-height: 1.15; color: var(--fg); }
-  .size-p small { font-size: .72rem; color: var(--muted); }
   @media (max-width: 480px) { .size { flex: 1 1 100%; } }
   @media (prefers-reduced-motion: no-preference) { .detail { animation: open .22s ease-out; } }
   @keyframes open { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
@@ -289,10 +287,10 @@
     const bag = el('div', 'size-bag');
     bag.insertAdjacentHTML('afterbegin', BAG_SVG);
     const w = el('div');
-    w.append(el('span', 'size-g', s.label), el('span', 'size-u', 'bag'));
+    w.append(el('span', 'size-g', s.label));
     bag.append(w);
     const p = el('div', 'size-p');
-    p.append(el('b', null, money(s.price)), el('small', null, 'per bag'));
+    p.append(el('b', null, money(s.price)));
     tile.append(bag, p);
     return tile;
   }
