@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Coffee Price List</title>
+<title>Monkey Co. Coffee Roasters Coffee Offerings</title>
 <meta name="description" content="Our current coffees, prices, flavor notes and bag sizes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,8 +13,8 @@
   window.CONFIG = {
     // Paste your Apps Script web app URL (ends in /exec)
     apiUrl: 'https://script.google.com/macros/s/AKfycbxMf1peh-ytMmoo1hM1_Wo9Heb6voaeslxg9bW0yVqOu4irWaYRG8vFD5WIIqi2O60i/exec',
-    shopName: 'Coffee Price List',
-    tagline: 'Freshly roasted beans. Tap any coffee for its flavor notes and bag sizes.',
+    shopName: 'Monkey Co. Coffee Roasters Coffee Offerings',
+    tagline: '',   // optional line under the title; '' hides it
     currencySymbol: '₱',
     // Optional: where customers order (Messenger, Instagram, shop link). Leave '' to hide.
     orderUrl: '',
@@ -43,7 +43,8 @@
   .stats b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
   .order { display: inline-block; margin-top: 18px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; padding: 10px 18px; border-radius: 999px; }
 
-  .tools { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 16px 0 12px; margin-top: 20px; display: grid; gap: 10px; }
+  .tools { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 16px 0 12px; margin-top: 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .tools > * { min-width: 0; }
   .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; appearance: none; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: .9rem; cursor: pointer; }
@@ -99,8 +100,8 @@
 <body>
 <main class="wrap">
   <header>
-    <h1 id="title">Coffee Price List</h1>
-    <p class="tagline" id="tagline"></p>
+    <h1 id="title">Monkey Co. Coffee Roasters Coffee Offerings</h1>
+    <p class="tagline" id="tagline" hidden></p>
     <div class="stats" id="stats" hidden>
       <span><b id="stat-count">—</b> coffees</span>
       <span>bags from <b id="stat-low">—</b></span>
@@ -113,7 +114,7 @@
     <div class="row2">
       <input class="search" id="search" type="search" placeholder="Search origin or flavor, e.g. berries" aria-label="Search coffees">
       <select class="sort" id="sort" aria-label="Sort">
-        <option value="menu">Menu order</option>
+        <option value="menu">Default</option>
         <option value="low">Price: low to high</option>
         <option value="high">Price: high to low</option>
       </select>
@@ -134,6 +135,7 @@
   const $ = (id) => document.getElementById(id);
   const CACHE = 'coffee-price-list-cache-v1';
   const state = { data: null, roast: 'All', q: '', sort: 'menu', open: new Set(), stale: false };
+  const roastLabel = (r) => /roast$/i.test(r) ? r : r + ' Roast';
   const money = (n) => C.currencySymbol + Number(n).toLocaleString('en-PH', { maximumFractionDigits: 2 });
   const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
   const store = {
@@ -143,7 +145,8 @@
 
   document.title = C.shopName;
   $('title').textContent = C.shopName;
-  $('tagline').textContent = C.tagline;
+  $('tagline').textContent = C.tagline || '';
+  $('tagline').hidden = !C.tagline;
   if (C.orderUrl) { const o = $('order'); o.href = C.orderUrl; o.textContent = C.orderLabel || 'Order now'; o.hidden = false; }
 
   function showError(text) {
@@ -192,7 +195,7 @@
     const roasts = ['All', ...new Set(coffees.map((c) => c.roast).filter(Boolean))];
     if (!roasts.includes(state.roast)) state.roast = 'All';
     $('chips').replaceChildren(...roasts.map((r) => {
-      const b = el('button', 'chip', r);
+      const b = el('button', 'chip', r === 'All' ? 'All' : roastLabel(r));
       b.type = 'button'; b.dataset.roast = r;
       b.setAttribute('aria-pressed', String(r === state.roast));
       return b;
@@ -208,10 +211,10 @@
     if (state.sort === 'menu') {
       const groups = new Map();
       shown.forEach((c) => { if (!groups.has(c.roast)) groups.set(c.roast, []); groups.get(c.roast).push(c); });
-      for (const [roast, list] of groups) sections.push(section(roast, list));
+      for (const [roast, list] of groups) sections.push(section(roastLabel(roast), list));
     } else {
       shown = [...shown].sort((a, b) => state.sort === 'low' ? minPrice(a) - minPrice(b) : minPrice(b) - minPrice(a));
-      if (shown.length) sections.push(section(state.roast === 'All' ? 'All coffees' : state.roast, shown));
+      if (shown.length) sections.push(section(state.roast === 'All' ? 'All coffees' : roastLabel(state.roast), shown));
     }
 
     if (sections.length) $('groups').replaceChildren(...sections);
