@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Monkey Co. Coffee Roasters Coffee Offerings</title>
+<title>Monkey Co. Coffee Roasters · Coffee Offerings</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="logo.png">
 <meta name="description" content="Our current coffees, prices, flavor notes and bag sizes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +15,9 @@
   window.CONFIG = {
     // Paste your Apps Script web app URL (ends in /exec)
     apiUrl: 'https://script.google.com/macros/s/AKfycbxMf1peh-ytMmoo1hM1_Wo9Heb6voaeslxg9bW0yVqOu4irWaYRG8vFD5WIIqi2O60i/exec',
-    shopName: 'Monkey Co. Coffee Roasters Coffee Offerings',
+    shopName: 'Monkey Co. Coffee Roasters',
+    subtitle: 'Coffee Offerings',
+    logo: 'logo.png',   // '' hides the logo
     tagline: '',   // optional line under the title; '' hides it
     currencySymbol: '₱',
     // Optional: where customers order (Messenger, Instagram, shop link). Leave '' to hide.
@@ -37,7 +41,11 @@
   body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.5; }
   .wrap { max-width: 52rem; margin-inline: auto; padding: 40px 16px 64px; }
 
-  header h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .brand { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; }
+  .logo { width: 92px; height: 92px; flex: none; border-radius: 50%; box-shadow: 0 2px 10px rgba(42,31,23,.12); }
+  header h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(1.6rem, 4.5vw, 2.4rem); line-height: 1.1; margin: 0; letter-spacing: -0.01em; }
+  .subhead { margin: 4px 0 0; font-size: clamp(.95rem, 2.4vw, 1.1rem); font-weight: 500; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; }
+  @media (max-width: 480px) { .logo { width: 68px; height: 68px; } .brand { gap: 12px; } }
   .tagline { margin: 0; color: var(--muted); max-width: 36rem; }
   .stats { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: var(--muted); font-size: .9rem; }
   .stats b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -100,7 +108,13 @@
 <body>
 <main class="wrap">
   <header>
-    <h1 id="title">Monkey Co. Coffee Roasters Coffee Offerings</h1>
+    <div class="brand">
+      <img class="logo" id="logo" src="logo.png" alt="Monkey Co. Coffee Roasters logo" width="92" height="92">
+      <div class="brand-text">
+        <h1 id="title">Monkey Co. Coffee Roasters</h1>
+        <p class="subhead" id="subtitle">Coffee Offerings</p>
+      </div>
+    </div>
     <p class="tagline" id="tagline" hidden></p>
     <div class="stats" id="stats" hidden>
       <span><b id="stat-count">—</b> coffees</span>
@@ -143,8 +157,11 @@
     set(v) { try { localStorage.setItem(CACHE, JSON.stringify(v)); } catch (e) { /* storage off */ } },
   };
 
-  document.title = C.shopName;
+  document.title = C.subtitle ? C.shopName + ' · ' + C.subtitle : C.shopName;
   $('title').textContent = C.shopName;
+  $('subtitle').textContent = C.subtitle || '';
+  $('subtitle').hidden = !C.subtitle;
+  if (C.logo) $('logo').src = C.logo; else $('logo').hidden = true;
   $('tagline').textContent = C.tagline || '';
   $('tagline').hidden = !C.tagline;
   if (C.orderUrl) { const o = $('order'); o.href = C.orderUrl; o.textContent = C.orderLabel || 'Order now'; o.hidden = false; }
